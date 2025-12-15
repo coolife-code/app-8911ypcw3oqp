@@ -56,7 +56,7 @@ export default function CardStack({ responses, onClear, onReshred }: CardStackPr
   }> = [
     { type: 'darkCheer', content: currentResponse.darkCheer, position: stripPositions[0] },
     { type: 'toxicSoup', content: currentResponse.toxicSoup, position: stripPositions[1] },
-    { type: 'microStory', content: currentResponse.microStory, position: stripPositions[2] },
+    { type: 'joke', content: currentResponse.joke, position: stripPositions[2] },
     { type: 'deepQuote', content: currentResponse.deepQuote, position: stripPositions[3] },
   ];
 

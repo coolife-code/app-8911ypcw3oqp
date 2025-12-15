@@ -164,7 +164,7 @@ export const sendChatStream = async (options: ChatStreamOptions): Promise<void> 
 export interface ShredResponse {
   darkCheer: string;
   toxicSoup: string;
-  microStory: string;
+  joke: string;
   deepQuote: string;
   originalText: string; // 保存原始输入文本，用于重新碎纸
 }
@@ -207,18 +207,18 @@ JSON格式要求：
 {
   "darkCheer": "越丧越燃的黑暗激励话语，30-50字",
   "toxicSoup": "一针见血的毒鸡汤现实感悟，30-50字",
-  "microStory": "完整的微小说故事，不限字数，尽可能详细生动，要有完整的情节、冲突和反转，像一个真正的短篇故事",
+  "joke": "幽默搞笑的段子或笑话，30-80字，要有梗、有反转，可以是冷笑话、谐音梗、吐槽段子",
   "deepQuote": "假装深刻的哲理名言，30-50字"
 }
 
 示例：
 用户输入：今天又加班到很晚，好累
 你的回复：
-{"darkCheer":"累？那是因为你还有被剥削的价值，恭喜！至少你还没被优化掉。","toxicSoup":"加班不会让你变强，只会让老板的车变豪。你的努力，成就的是别人的梦想。","microStory":"他每天加班到深夜，相信努力会有回报。三个月后，公司年会上，老板开着新买的保时捷到场，感谢大家的辛勤付出。他看着自己银行卡里的余额，突然明白了什么。第二天，他照常打卡上班，因为房贷还要还三十年。晚上十点，办公室依然灯火通明，他打开外卖软件，点了一份最便宜的盖浇饭。窗外的城市霓虹闪烁，他想起了曾经的梦想，笑了笑，继续敲代码。凌晨回到家，妻子已经睡了，桌上留着一张便条：'饭在锅里，热一下就能吃。'他看着便条，眼眶有些湿润。这个城市的夜晚很冷，但至少还有人在等他回家。","deepQuote":"当你觉得累的时候，说明你还在向上爬。躺平的人从不喊累，因为他们已经放弃了。"}
+{"darkCheer":"累？那是因为你还有被剥削的价值，恭喜！至少你还没被优化掉。","toxicSoup":"加班不会让你变强，只会让老板的车变豪。你的努力，成就的是别人的梦想。","joke":"老板说：'你们就是公司的家人！'我信了，直到发现家人不用打卡，家人生病有人照顾，家人过年有红包。后来我明白了，原来我是那个远房穷亲戚。","deepQuote":"当你觉得累的时候，说明你还在向上爬。躺平的人从不喊累，因为他们已经放弃了。"}
 
 记住：
 1. 直接返回JSON对象，不要用\`\`\`包裹！
-2. microStory不限字数，尽可能写得详细生动，有完整的情节发展和反转！`;
+2. joke要幽默有梗，30-80字，有反转或吐槽点！`;
 
 
 
@@ -250,7 +250,7 @@ JSON格式要求：
           const parsed = JSON.parse(cleanedResponse);
           
           // 验证返回的数据包含所有必需字段
-          if (!parsed.darkCheer || !parsed.toxicSoup || !parsed.microStory || !parsed.deepQuote) {
+          if (!parsed.darkCheer || !parsed.toxicSoup || !parsed.joke || !parsed.deepQuote) {
             console.warn('AI返回数据不完整:', parsed);
             reject(new Error('AI返回数据不完整，请重试'));
             return;
@@ -259,7 +259,7 @@ JSON格式要求：
           resolve({
             darkCheer: parsed.darkCheer,
             toxicSoup: parsed.toxicSoup,
-            microStory: parsed.microStory,
+            joke: parsed.joke,
             deepQuote: parsed.deepQuote,
             originalText: userInput // 保存原始输入
           });

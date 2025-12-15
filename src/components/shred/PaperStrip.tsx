@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface PaperStripProps {
-  type: 'darkCheer' | 'toxicSoup' | 'microStory' | 'deepQuote';
+  type: 'darkCheer' | 'toxicSoup' | 'joke' | 'deepQuote';
   content: string;
   index: number;
   position?: { x: number; y: number; rotation: number }; // 散乱位置
@@ -23,7 +23,7 @@ const typeConfig = {
     borderColor: 'border-purple-400',
     shadowColor: 'shadow-purple-200'
   },
-  microStory: {
+  joke: {
     bgColor: 'bg-gradient-to-br from-amber-50 to-yellow-50',
     textColor: 'text-amber-800',
     borderColor: 'border-amber-400',
