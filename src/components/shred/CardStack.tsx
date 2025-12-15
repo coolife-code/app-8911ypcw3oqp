@@ -31,6 +31,7 @@ const generateRandomPosition = (index: number) => {
 export default function CardStack({ responses, onClear, onReshred }: CardStackProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [draggedContent, setDraggedContent] = useState<string>('');
+  const [draggedIndex, setDraggedIndex] = useState<number>(-1);
 
   if (responses.length === 0) {
     return null;
@@ -39,9 +40,14 @@ export default function CardStack({ responses, onClear, onReshred }: CardStackPr
   const currentResponse = responses[responses.length - 1];
   
   // 为每张纸条生成固定的随机位置（使用useMemo避免重新渲染时位置变化）
-  const stripPositions = useMemo(() => {
-    return [0, 1, 2, 3].map(i => generateRandomPosition(i));
-  }, [responses.length]); // 只在responses变化时重新生成
+  const [stripPositions, setStripPositions] = useState(() => 
+    [0, 1, 2, 3].map(i => generateRandomPosition(i))
+  );
+
+  // 当responses变化时重新生成位置
+  useEffect(() => {
+    setStripPositions([0, 1, 2, 3].map(i => generateRandomPosition(i)));
+  }, [responses.length]);
 
   const strips: Array<{ 
     type: keyof Omit<ShredResponse, 'originalText'>; 
@@ -78,8 +84,37 @@ export default function CardStack({ responses, onClear, onReshred }: CardStackPr
   };
 
   // 处理纸条开始拖拽
-  const handleStripDragStart = (content: string) => {
+  const handleStripDragStart = (content: string, index: number) => {
     setDraggedContent(content);
+    setDraggedIndex(index);
+  };
+
+  // 处理纸条拖拽结束，更新位置
+  const handleStripDragEnd = (index: number, clientX: number, clientY: number, droppedOnTrash: boolean) => {
+    setDraggedIndex(-1);
+    
+    // 如果拖到垃圾桶，不更新位置
+    if (droppedOnTrash) {
+      return;
+    }
+
+    // 计算新位置（相对于视口的百分比）
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    const newX = (clientX / viewportWidth) * 100;
+    const newY = (clientY / viewportHeight) * 100;
+
+    // 更新卡片位置
+    setStripPositions(prev => {
+      const newPositions = [...prev];
+      newPositions[index] = {
+        x: Math.max(10, Math.min(90, newX)), // 限制在10%-90%范围内
+        y: Math.max(10, Math.min(90, newY)),
+        rotation: prev[index].rotation // 保持原有旋转角度
+      };
+      return newPositions;
+    });
   };
 
   return (
@@ -94,6 +129,7 @@ export default function CardStack({ responses, onClear, onReshred }: CardStackPr
             index={index}
             position={strip.position}
             onDragStart={handleStripDragStart}
+            onDragEnd={handleStripDragEnd}
           />
         ))}
       </div>

@@ -6,7 +6,8 @@ interface PaperStripProps {
   content: string;
   index: number;
   position?: { x: number; y: number; rotation: number }; // 散乱位置
-  onDragStart?: (content: string) => void; // 拖拽开始回调
+  onDragStart?: (content: string, index: number) => void; // 拖拽开始回调
+  onDragEnd?: (index: number, clientX: number, clientY: number, droppedOnTrash: boolean) => void; // 拖拽结束回调
 }
 
 const typeConfig = {
@@ -36,8 +37,9 @@ const typeConfig = {
   }
 };
 
-export default function PaperStrip({ type, content, index, position, onDragStart }: PaperStripProps) {
+export default function PaperStrip({ type, content, index, position, onDragStart, onDragEnd }: PaperStripProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   const config = typeConfig[type];
 
   // 使用传入的位置或默认堆叠位置
@@ -50,17 +52,32 @@ export default function PaperStrip({ type, content, index, position, onDragStart
   // 处理拖拽开始
   const handleDragStart = (e: React.DragEvent) => {
     setIsDragging(true);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', content);
     
     if (onDragStart) {
-      onDragStart(content);
+      onDragStart(content, index);
     }
   };
 
   // 处理拖拽结束
-  const handleDragEnd = () => {
+  const handleDragEnd = (e: React.DragEvent) => {
     setIsDragging(false);
+    
+    if (onDragEnd) {
+      // 检测是否拖到垃圾桶区域（右下角）
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const trashZoneSize = viewportWidth < 1280 ? 80 : 160; // 移动端80px，桌面端160px
+      const trashZoneMargin = viewportWidth < 1280 ? 16 : 32; // 移动端16px，桌面端32px
+      
+      const isInTrashZone = 
+        e.clientX > viewportWidth - trashZoneSize - trashZoneMargin &&
+        e.clientY > viewportHeight - trashZoneSize - trashZoneMargin;
+      
+      onDragEnd(index, e.clientX, e.clientY, isInTrashZone);
+    }
   };
 
   // 所有卡片统一大小
