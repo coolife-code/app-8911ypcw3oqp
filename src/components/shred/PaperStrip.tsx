@@ -11,32 +11,28 @@ interface PaperStripProps {
 
 const typeConfig = {
   darkCheer: {
-    title: '黑暗激励',
-    emoji: '🔥',
-    bgColor: 'bg-chart-1/20',
-    borderColor: 'border-chart-1',
-    textColor: 'text-chart-1'
+    bgColor: 'bg-gradient-to-br from-orange-50 to-red-50',
+    textColor: 'text-red-700',
+    borderColor: 'border-red-400',
+    shadowColor: 'shadow-red-200'
   },
   toxicSoup: {
-    title: '毒鸡汤',
-    emoji: '💀',
-    bgColor: 'bg-chart-2/20',
-    borderColor: 'border-chart-2',
-    textColor: 'text-chart-2'
+    bgColor: 'bg-gradient-to-br from-purple-50 to-indigo-50',
+    textColor: 'text-purple-700',
+    borderColor: 'border-purple-400',
+    shadowColor: 'shadow-purple-200'
   },
   microStory: {
-    title: '微小说',
-    emoji: '📖',
-    bgColor: 'bg-chart-3/20',
-    borderColor: 'border-chart-3',
-    textColor: 'text-chart-3'
+    bgColor: 'bg-gradient-to-br from-amber-50 to-yellow-50',
+    textColor: 'text-amber-800',
+    borderColor: 'border-amber-400',
+    shadowColor: 'shadow-amber-200'
   },
   deepQuote: {
-    title: '哲理名言',
-    emoji: '💎',
-    bgColor: 'bg-chart-4/20',
-    borderColor: 'border-chart-4',
-    textColor: 'text-chart-4'
+    bgColor: 'bg-gradient-to-br from-teal-50 to-cyan-50',
+    textColor: 'text-teal-700',
+    borderColor: 'border-teal-400',
+    shadowColor: 'shadow-teal-200'
   }
 };
 
@@ -67,10 +63,10 @@ export default function PaperStrip({ type, content, index, position, onDragStart
     setIsDragging(false);
   };
 
-  // 根据类型调整卡片高度（微小说可能更长）
+  // 根据类型调整卡片高度（微小说更长）
   const heightClass = type === 'microStory' 
-    ? 'min-h-56 max-h-80 xl:min-h-96 xl:max-h-[32rem]' 
-    : 'h-56 xl:h-96';
+    ? 'min-h-72 max-h-96 xl:min-h-[28rem] xl:max-h-[36rem]' 
+    : 'h-56 xl:h-80';
 
   return (
     <div
@@ -88,47 +84,29 @@ export default function PaperStrip({ type, content, index, position, onDragStart
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      {/* 像素风格卡片 - 直接显示内容 */}
+      {/* 艺术像素风格卡片 - 只有文字 */}
       <div className={cn(
-        'w-40 xl:w-64',
+        'w-44 xl:w-72',
         heightClass,
-        'pixel-border-thick border-4',
+        'pixel-border-thick border-[6px]',
         config.borderColor,
         config.bgColor,
-        'rounded-lg p-3 xl:p-6',
-        'flex flex-col gap-2 xl:gap-3',
-        'shadow-[4px_4px_0px_0px_rgba(0,0,0,0.25)]',
-        'hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)]',
-        'transition-shadow'
+        'rounded-2xl p-4 xl:p-8',
+        'flex items-center justify-center',
+        'shadow-[6px_6px_0px_0px] xl:shadow-[8px_8px_0px_0px]',
+        config.shadowColor,
+        'hover:shadow-[8px_8px_0px_0px] xl:hover:shadow-[10px_10px_0px_0px]',
+        'transition-shadow',
+        'overflow-hidden'
       )}>
-        {/* 标题栏 */}
-        <div className={cn(
-          'flex items-center gap-2 pb-2 border-b-2',
-          config.borderColor
-        )}>
-          <span className="text-2xl xl:text-4xl">{config.emoji}</span>
-          <h3 className={cn(
-            'text-[10px] xl:text-sm font-bold pixel-text',
-            config.textColor
-          )}>
-            {config.title}
-          </h3>
-        </div>
-
-        {/* 内容区域 */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* 内容区域 - 可滚动 */}
+        <div className="w-full h-full overflow-y-auto custom-scrollbar flex items-center justify-center">
           <p className={cn(
-            'text-[9px] xl:text-xs leading-relaxed pixel-text break-words',
-            'text-foreground'
+            'text-sm xl:text-lg leading-relaxed pixel-text break-words text-center',
+            config.textColor,
+            'font-bold'
           )}>
             {content || '生成中...'}
-          </p>
-        </div>
-
-        {/* 底部提示 */}
-        <div className="pt-2 border-t border-border">
-          <p className="text-[7px] xl:text-[9px] text-muted-foreground text-center pixel-text">
-            拖到垃圾桶重新碎纸
           </p>
         </div>
       </div>
