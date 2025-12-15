@@ -114,8 +114,8 @@ export default function PaperStrip({ type, content, index, position, onDragStart
         'transition-shadow',
         'overflow-hidden'
       )}>
-        {/* 内容区域 - 可滚动 */}
-        <div className="w-full h-full overflow-y-auto custom-scrollbar flex items-center justify-center p-2">
+        {/* 内容区域 - 不显示滚动条 */}
+        <div className="w-full h-full overflow-y-auto scrollbar-hide flex items-center justify-center p-2">
           <p className={cn(
             'text-sm xl:text-lg leading-relaxed pixel-text break-words text-center',
             config.textColor,
