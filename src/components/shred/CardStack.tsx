@@ -140,7 +140,7 @@ export default function CardStack({ responses, onClear, onReshred }: CardStackPr
           已生成 {responses.length} 次
         </p>
         <p className="text-[8px] xl:text-[10px] text-muted-foreground">
-          点击卡片翻面 · 拖动卡片到垃圾桶重新碎纸
+          拖动卡片到垃圾桶重新碎纸
         </p>
       </div>
     </div>

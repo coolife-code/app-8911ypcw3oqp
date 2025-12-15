@@ -13,31 +13,34 @@ const typeConfig = {
   darkCheer: {
     title: '黑暗激励',
     emoji: '🔥',
-    bgColor: 'bg-chart-1',
+    bgColor: 'bg-chart-1/20',
+    borderColor: 'border-chart-1',
     textColor: 'text-chart-1'
   },
   toxicSoup: {
     title: '毒鸡汤',
     emoji: '💀',
-    bgColor: 'bg-chart-2',
+    bgColor: 'bg-chart-2/20',
+    borderColor: 'border-chart-2',
     textColor: 'text-chart-2'
   },
   microStory: {
     title: '微小说',
     emoji: '📖',
-    bgColor: 'bg-chart-3',
+    bgColor: 'bg-chart-3/20',
+    borderColor: 'border-chart-3',
     textColor: 'text-chart-3'
   },
   deepQuote: {
     title: '哲理名言',
     emoji: '💎',
-    bgColor: 'bg-chart-4',
+    bgColor: 'bg-chart-4/20',
+    borderColor: 'border-chart-4',
     textColor: 'text-chart-4'
   }
 };
 
 export default function PaperStrip({ type, content, index, position, onDragStart }: PaperStripProps) {
-  const [isFlipped, setIsFlipped] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const config = typeConfig[type];
 
@@ -64,10 +67,15 @@ export default function PaperStrip({ type, content, index, position, onDragStart
     setIsDragging(false);
   };
 
+  // 根据类型调整卡片高度（微小说可能更长）
+  const heightClass = type === 'microStory' 
+    ? 'min-h-56 max-h-80 xl:min-h-96 xl:max-h-[32rem]' 
+    : 'h-56 xl:h-96';
+
   return (
     <div
       className={cn(
-        'absolute flip-card cursor-grab active:cursor-grabbing transition-opacity',
+        'absolute cursor-grab active:cursor-grabbing transition-opacity',
         isDragging && 'opacity-50'
       )}
       style={{
@@ -79,39 +87,49 @@ export default function PaperStrip({ type, content, index, position, onDragStart
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onClick={() => !isDragging && setIsFlipped(!isFlipped)}
     >
-      {/* 响应式尺寸：移动端小，桌面端大 */}
-      <div className={cn('flip-card-inner w-40 h-56 xl:w-64 xl:h-96', isFlipped && 'flipped')}>
-        {/* 正面 - 标题 */}
-        <div className="flip-card-front absolute w-full h-full">
-          <div className={cn(
-            'w-full h-full pixel-border border-foreground rounded-lg p-3 xl:p-6',
-            'flex flex-col items-center justify-center gap-2 xl:gap-4',
-            'bg-card shadow-xl'
+      {/* 像素风格卡片 - 直接显示内容 */}
+      <div className={cn(
+        'w-40 xl:w-64',
+        heightClass,
+        'pixel-border-thick border-4',
+        config.borderColor,
+        config.bgColor,
+        'rounded-lg p-3 xl:p-6',
+        'flex flex-col gap-2 xl:gap-3',
+        'shadow-[4px_4px_0px_0px_rgba(0,0,0,0.25)]',
+        'hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)]',
+        'transition-shadow'
+      )}>
+        {/* 标题栏 */}
+        <div className={cn(
+          'flex items-center gap-2 pb-2 border-b-2',
+          config.borderColor
+        )}>
+          <span className="text-2xl xl:text-4xl">{config.emoji}</span>
+          <h3 className={cn(
+            'text-[10px] xl:text-sm font-bold pixel-text',
+            config.textColor
           )}>
-            <div className="text-4xl xl:text-6xl">{config.emoji}</div>
-            <h3 className="text-[10px] xl:text-sm font-bold pixel-text text-center">
-              {config.title}
-            </h3>
-            <p className="text-[8px] xl:text-xs text-muted-foreground text-center">
-              点击翻面 / 拖到垃圾桶
-            </p>
-          </div>
+            {config.title}
+          </h3>
         </div>
 
-        {/* 背面 - 内容 */}
-        <div className="flip-card-back absolute w-full h-full">
-          <div className={cn(
-            'w-full h-full pixel-border border-foreground rounded-lg p-3 xl:p-6',
-            'flex flex-col items-center justify-center',
-            config.bgColor,
-            'shadow-xl'
+        {/* 内容区域 */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <p className={cn(
+            'text-[9px] xl:text-xs leading-relaxed pixel-text break-words',
+            'text-foreground'
           )}>
-            <p className="text-[9px] xl:text-xs leading-relaxed text-center text-background font-bold break-words px-1 xl:px-2">
-              {content || '生成中...'}
-            </p>
-          </div>
+            {content || '生成中...'}
+          </p>
+        </div>
+
+        {/* 底部提示 */}
+        <div className="pt-2 border-t border-border">
+          <p className="text-[7px] xl:text-[9px] text-muted-foreground text-center pixel-text">
+            拖到垃圾桶重新碎纸
+          </p>
         </div>
       </div>
     </div>
