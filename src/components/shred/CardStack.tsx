@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import PaperStrip from './PaperStrip';
 import { ShredResponse } from '@/services/ai';
 import { cn } from '@/lib/utils';
@@ -6,95 +6,142 @@ import { cn } from '@/lib/utils';
 interface CardStackProps {
   responses: ShredResponse[];
   onClear?: () => void;
-  onReshred?: (text: string) => void; // 新增：重新碎纸回调
+  onReshred?: (text: string) => void; // 拖入垃圾桶后重新碎纸
 }
 
-export default function CardStack({ responses, onClear, onReshred }: CardStackProps) {
-  const [shouldWobble, setShouldWobble] = useState(false);
+// 生成随机散乱位置
+const generateRandomPosition = (index: number) => {
+  // 四个象限的中心点
+  const quadrants = [
+    { x: 30, y: 30 }, // 左上
+    { x: 70, y: 30 }, // 右上
+    { x: 30, y: 70 }, // 左下
+    { x: 70, y: 70 }, // 右下
+  ];
+  
+  const quadrant = quadrants[index % 4];
+  
+  return {
+    x: quadrant.x + (Math.random() - 0.5) * 20, // ±10% 随机偏移
+    y: quadrant.y + (Math.random() - 0.5) * 20,
+    rotation: (Math.random() - 0.5) * 30 // ±15度随机旋转
+  };
+};
 
-  useEffect(() => {
-    // 当堆叠到第7张时触发晃动
-    if (responses.length === 7) {
-      setShouldWobble(true);
-      setTimeout(() => setShouldWobble(false), 1000);
-    }
-  }, [responses.length]);
+export default function CardStack({ responses, onClear, onReshred }: CardStackProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [draggedContent, setDraggedContent] = useState<string>('');
 
   if (responses.length === 0) {
     return null;
   }
 
   const currentResponse = responses[responses.length - 1];
-  const strips: Array<{ type: keyof Omit<ShredResponse, 'originalText'>; content: string }> = [
-    { type: 'darkCheer', content: currentResponse.darkCheer },
-    { type: 'toxicSoup', content: currentResponse.toxicSoup },
-    { type: 'microStory', content: currentResponse.microStory },
-    { type: 'deepQuote', content: currentResponse.deepQuote },
+  
+  // 为每张纸条生成固定的随机位置（使用useMemo避免重新渲染时位置变化）
+  const stripPositions = useMemo(() => {
+    return [0, 1, 2, 3].map(i => generateRandomPosition(i));
+  }, [responses.length]); // 只在responses变化时重新生成
+
+  const strips: Array<{ 
+    type: keyof Omit<ShredResponse, 'originalText'>; 
+    content: string;
+    position: { x: number; y: number; rotation: number };
+  }> = [
+    { type: 'darkCheer', content: currentResponse.darkCheer, position: stripPositions[0] },
+    { type: 'toxicSoup', content: currentResponse.toxicSoup, position: stripPositions[1] },
+    { type: 'microStory', content: currentResponse.microStory, position: stripPositions[2] },
+    { type: 'deepQuote', content: currentResponse.deepQuote, position: stripPositions[3] },
   ];
 
-  // 处理重新碎纸
-  const handleReshred = () => {
-    if (onReshred && currentResponse.originalText) {
-      onReshred(currentResponse.originalText);
+  // 处理拖拽进入垃圾桶区域
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  };
+
+  // 处理拖拽离开垃圾桶区域
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  // 处理放下纸条到垃圾桶
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const content = e.dataTransfer.getData('text/plain');
+    if (content && onReshred) {
+      onReshred(content);
     }
   };
 
+  // 处理纸条开始拖拽
+  const handleStripDragStart = (content: string) => {
+    setDraggedContent(content);
+  };
+
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className={cn(
-        'relative w-full h-full flex items-center justify-center',
-        shouldWobble && 'tower-wobble'
-      )}>
-        {/* 卡片堆叠显示 */}
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50">
+      {/* 散乱的纸条 */}
+      <div className="relative w-full h-full">
         {strips.map((strip, index) => (
           <PaperStrip
             key={`${responses.length}-${strip.type}`}
             type={strip.type}
             content={strip.content}
             index={index}
+            position={strip.position}
+            onDragStart={handleStripDragStart}
           />
         ))}
+      </div>
 
-        {/* 控制按钮 */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col xl:flex-row gap-3 items-center">
-          <button
-            onClick={handleReshred}
-            className="pixel-border border-primary bg-primary/10 px-6 py-3 rounded-lg font-bold hover:bg-primary/20 transition-colors text-xs text-primary"
-          >
-            用这张再碎 🔄
-          </button>
-          <button
-            onClick={onClear}
-            className="pixel-border border-foreground bg-card px-6 py-3 rounded-lg font-bold hover:bg-accent transition-colors text-xs"
-          >
-            输入新内容 ✨
-          </button>
+      {/* 垃圾桶 Drop Zone - 右下角 */}
+      <div
+        className={cn(
+          'fixed bottom-8 right-8 w-32 h-32 xl:w-40 xl:h-40',
+          'pixel-border border-foreground rounded-lg',
+          'flex flex-col items-center justify-center gap-2',
+          'transition-all duration-300',
+          isDragOver 
+            ? 'bg-primary/30 border-primary scale-110 shadow-2xl' 
+            : 'bg-card/50 hover:bg-card/80'
+        )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className={cn(
+          'text-5xl xl:text-6xl transition-transform',
+          isDragOver && 'animate-bounce'
+        )}>
+          🗑️
         </div>
+        <p className="text-[10px] xl:text-xs pixel-text text-center px-2">
+          {isDragOver ? '松手碎纸！' : '拖到这里'}
+        </p>
+      </div>
 
-        {/* 原始文本显示 */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 max-w-md text-center px-4">
-          <p className="text-[10px] text-muted-foreground mb-1">原始碎念</p>
-          <p className="text-xs pixel-text text-foreground/80 line-clamp-2">
-            {currentResponse.originalText}
-          </p>
-        </div>
+      {/* 返回按钮 - 左下角 */}
+      <div className="fixed bottom-8 left-8">
+        <button
+          onClick={onClear}
+          className="pixel-border border-foreground bg-card px-6 py-3 rounded-lg font-bold hover:bg-accent transition-colors text-xs"
+        >
+          输入新内容 ✨
+        </button>
+      </div>
 
-        {/* 堆叠计数和警告 */}
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 text-center">
-          <p className="text-xs pixel-text">
-            已碎 {responses.length} 张
-          </p>
-          {responses.length >= 7 && (
-            <p className="text-xs text-destructive mt-2 animate-bounce">
-              ⚠️ 再高就倒了哦！
-            </p>
-          )}
-        </div>
-
-        {/* 左右滑动提示 */}
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
-          点击卡片翻面查看内容
-        </div>
+      {/* 提示信息 - 顶部 */}
+      <div className="fixed top-8 left-1/2 -translate-x-1/2 text-center">
+        <p className="text-xs pixel-text mb-2">
+          已生成 {responses.length} 次
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          点击卡片翻面 · 拖动卡片到垃圾桶重新碎纸
+        </p>
       </div>
     </div>
   );

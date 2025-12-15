@@ -5,6 +5,8 @@ interface PaperStripProps {
   type: 'darkCheer' | 'toxicSoup' | 'microStory' | 'deepQuote';
   content: string;
   index: number;
+  position?: { x: number; y: number; rotation: number }; // 散乱位置
+  onDragStart?: (content: string) => void; // 拖拽开始回调
 }
 
 const typeConfig = {
@@ -34,22 +36,50 @@ const typeConfig = {
   }
 };
 
-export default function PaperStrip({ type, content, index }: PaperStripProps) {
+export default function PaperStrip({ type, content, index, position, onDragStart }: PaperStripProps) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const config = typeConfig[type];
 
-  // 计算卡片位置和旋转角度
-  const rotation = (index - 1.5) * 3; // -4.5, -1.5, 1.5, 4.5度
+  // 使用传入的位置或默认堆叠位置
+  const defaultRotation = (index - 1.5) * 3;
+  const rotation = position?.rotation ?? defaultRotation;
+  const left = position?.x ?? 50;
+  const top = position?.y ?? 50;
   const zIndex = 10 + index;
+
+  // 处理拖拽开始
+  const handleDragStart = (e: React.DragEvent) => {
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', content);
+    
+    if (onDragStart) {
+      onDragStart(content);
+    }
+  };
+
+  // 处理拖拽结束
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
 
   return (
     <div
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flip-card cursor-pointer"
+      className={cn(
+        'absolute flip-card cursor-grab active:cursor-grabbing transition-opacity',
+        isDragging && 'opacity-50'
+      )}
       style={{
+        left: `${left}%`,
+        top: `${top}%`,
         transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
         zIndex
       }}
-      onClick={() => setIsFlipped(!isFlipped)}
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onClick={() => !isDragging && setIsFlipped(!isFlipped)}
     >
       <div className={cn('flip-card-inner w-64 h-96', isFlipped && 'flipped')}>
         {/* 正面 - 标题 */}
@@ -64,7 +94,7 @@ export default function PaperStrip({ type, content, index }: PaperStripProps) {
               {config.title}
             </h3>
             <p className="text-xs text-muted-foreground text-center">
-              点击翻面查看
+              点击翻面 / 拖到垃圾桶
             </p>
           </div>
         </div>
