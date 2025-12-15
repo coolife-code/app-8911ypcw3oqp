@@ -49,9 +49,24 @@ export default function HomePage() {
       
     } catch (error) {
       console.error('碎纸失败:', error);
+      
+      // 根据错误类型提供不同的提示
+      let errorMessage = '请稍后重试';
+      if (error instanceof Error) {
+        if (error.message.includes('格式错误')) {
+          errorMessage = 'AI小精灵打瞌睡了，请再试一次 😴';
+        } else if (error.message.includes('不完整')) {
+          errorMessage = 'AI小精灵偷懒了，请再试一次 😅';
+        } else if (error.message.includes('网络')) {
+          errorMessage = '网络连接不稳定，请检查网络后重试 📡';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: '碎纸失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: '碎纸失败 💔',
+        description: errorMessage,
         variant: 'destructive'
       });
     } finally {

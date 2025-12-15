@@ -168,6 +168,29 @@ export interface ShredResponse {
   deepQuote: string;
 }
 
+// 提取JSON内容的辅助函数
+const extractJSON = (text: string): string => {
+  // 移除可能的markdown代码块标记
+  let cleaned = text.trim();
+  
+  // 移除 ```json 或 ``` 开头
+  cleaned = cleaned.replace(/^```json\s*/i, '');
+  cleaned = cleaned.replace(/^```\s*/, '');
+  
+  // 移除 ``` 结尾
+  cleaned = cleaned.replace(/\s*```\s*$/, '');
+  
+  // 查找第一个 { 和最后一个 }
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
+  
+  return cleaned.trim();
+};
+
 export const generateShredResponses = async (
   userInput: string,
   onProgress?: (responses: Partial<ShredResponse>) => void
@@ -175,13 +198,24 @@ export const generateShredResponses = async (
   const APP_ID = import.meta.env.VITE_APP_ID;
   const endpoint = 'https://api-integrations.appmiaoda.com/app-8911ypcw3oqp/api-2bk93oeO9NlE/v2/chat/completions';
 
-  const systemPrompt = `你是碎纸机里的毒舌小精灵，请把用户输入当成燃料，严格按以下JSON格式返回，不要有多余解释：
+  const systemPrompt = `你是碎纸机里的毒舌小精灵。用户会输入他们的心情、吐槽或碎碎念，你需要生成四种不同风格的回应。
+
+【重要】你的回复必须是纯JSON格式，不要添加任何markdown标记（如\`\`\`json），不要添加任何解释文字，只返回JSON对象。
+
+JSON格式要求：
 {
   "darkCheer": "越丧越燃的黑暗激励话语，30字以内",
   "toxicSoup": "一针见血的毒鸡汤现实感悟，30字以内",
   "microStory": "30字微小说，要有反转",
   "deepQuote": "假装深刻的哲理名言，30字以内"
-}`;
+}
+
+示例：
+用户输入：今天又加班到很晚，好累
+你的回复：
+{"darkCheer":"累？那是因为你还有被剥削的价值，恭喜！","toxicSoup":"加班不会让你变强，只会让老板的车变豪。","microStory":"他加班到深夜。第二天，老板夸他勤奋。第三天，他被优化了。","deepQuote":"当你觉得累的时候，说明你还在向上爬。躺平的人从不喊累。"}
+
+记住：直接返回JSON对象，不要用\`\`\`包裹！`;
 
   return new Promise((resolve, reject) => {
     let fullResponse = '';
@@ -197,7 +231,8 @@ export const generateShredResponses = async (
         fullResponse = content;
         // 尝试解析部分响应
         try {
-          const parsed = JSON.parse(content);
+          const cleanedContent = extractJSON(content);
+          const parsed = JSON.parse(cleanedContent);
           onProgress?.(parsed);
         } catch {
           // 还未完成，继续等待
@@ -205,10 +240,27 @@ export const generateShredResponses = async (
       },
       onComplete: () => {
         try {
-          const parsed = JSON.parse(fullResponse);
-          resolve(parsed);
+          const cleanedResponse = extractJSON(fullResponse);
+          console.log('清理后的响应:', cleanedResponse);
+          const parsed = JSON.parse(cleanedResponse);
+          
+          // 验证返回的数据包含所有必需字段
+          if (!parsed.darkCheer || !parsed.toxicSoup || !parsed.microStory || !parsed.deepQuote) {
+            console.warn('AI返回数据不完整:', parsed);
+            reject(new Error('AI返回数据不完整，请重试'));
+            return;
+          }
+          
+          resolve({
+            darkCheer: parsed.darkCheer,
+            toxicSoup: parsed.toxicSoup,
+            microStory: parsed.microStory,
+            deepQuote: parsed.deepQuote
+          });
         } catch (error) {
-          reject(new Error('AI返回格式错误'));
+          console.error('解析错误，原始响应:', fullResponse);
+          console.error('错误详情:', error);
+          reject(new Error(`AI返回格式错误，请重试`));
         }
       },
       onError: (error: Error) => {
