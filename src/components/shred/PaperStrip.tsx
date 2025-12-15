@@ -63,10 +63,8 @@ export default function PaperStrip({ type, content, index, position, onDragStart
     setIsDragging(false);
   };
 
-  // 根据类型调整卡片高度（微小说更长）
-  const heightClass = type === 'microStory' 
-    ? 'min-h-72 max-h-96 xl:min-h-[28rem] xl:max-h-[36rem]' 
-    : 'h-56 xl:h-80';
+  // 所有卡片统一大小
+  const heightClass = 'h-64 xl:h-96';
 
   return (
     <div
@@ -100,7 +98,7 @@ export default function PaperStrip({ type, content, index, position, onDragStart
         'overflow-hidden'
       )}>
         {/* 内容区域 - 可滚动 */}
-        <div className="w-full h-full overflow-y-auto custom-scrollbar flex items-center justify-center">
+        <div className="w-full h-full overflow-y-auto custom-scrollbar flex items-center justify-center p-2">
           <p className={cn(
             'text-sm xl:text-lg leading-relaxed pixel-text break-words text-center',
             config.textColor,

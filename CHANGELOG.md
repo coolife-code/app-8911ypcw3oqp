@@ -30,11 +30,11 @@
 - **居中对齐**：text-center
 - **行高舒适**：leading-relaxed
 
-#### 4. 微小说扩展
-- **字数要求**：180-220字的完整故事
-- **内容要求**：有情节、冲突和反转
-- **卡片高度**：移动端72-96，桌面端28rem-36rem
-- **支持滚动**：自定义像素风格滚动条
+#### 4. 统一卡片尺寸
+- **所有卡片相同大小**：移动端44×64（176×256px），桌面端72×96（288×384px）
+- **支持滚动查看**：文字多的卡片可以滚动阅读
+- **微小说200字**：完整故事在固定大小卡片内滚动显示
+- **拖拽友好**：统一尺寸让拖拽更自然
 
 #### 5. 像素风格增强
 - **粗边框**：6px实线边框
@@ -108,15 +108,13 @@ const typeConfig = {
   // ... 其他类型
 };
 
-// 微小说更长
-const heightClass = type === 'microStory' 
-  ? 'min-h-72 max-h-96 xl:min-h-[28rem] xl:max-h-[36rem]' 
-  : 'h-56 xl:h-80';
+// 所有卡片统一大小
+const heightClass = 'h-64 xl:h-96';
 
 // 极简卡片 - 只有文字
 <div className={cn(
   'w-44 xl:w-72',
-  heightClass,
+  heightClass,  // 统一高度
   'pixel-border-thick border-[6px]',
   config.borderColor,
   config.bgColor,
@@ -125,7 +123,7 @@ const heightClass = type === 'microStory'
   'shadow-[6px_6px_0px_0px] xl:shadow-[8px_8px_0px_0px]',
   config.shadowColor
 )}>
-  <div className="w-full h-full overflow-y-auto custom-scrollbar flex items-center justify-center">
+  <div className="w-full h-full overflow-y-auto custom-scrollbar flex items-center justify-center p-2">
     <p className={cn(
       'text-sm xl:text-lg leading-relaxed pixel-text break-words text-center',
       config.textColor,
