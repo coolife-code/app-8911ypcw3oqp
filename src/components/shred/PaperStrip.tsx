@@ -40,6 +40,7 @@ const typeConfig = {
 export default function PaperStrip({ type, content, index, position, onDragStart, onDragEnd }: PaperStripProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+  const [touchOffset, setTouchOffset] = useState({ x: 0, y: 0 });
   const config = typeConfig[type];
 
   // 使用传入的位置或默认堆叠位置
@@ -47,9 +48,20 @@ export default function PaperStrip({ type, content, index, position, onDragStart
   const rotation = position?.rotation ?? defaultRotation;
   const left = position?.x ?? 50;
   const top = position?.y ?? 50;
-  const zIndex = 10 + index;
+  const zIndex = isDragging ? 9999 : 10 + index; // 拖拽时置顶
 
-  // 处理拖拽开始
+  // 检测是否在垃圾桶区域
+  const checkTrashZone = (clientX: number, clientY: number) => {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const trashZoneSize = viewportWidth < 1280 ? 80 : 160;
+    const trashZoneMargin = viewportWidth < 1280 ? 16 : 32;
+    
+    return clientX > viewportWidth - trashZoneSize - trashZoneMargin &&
+           clientY > viewportHeight - trashZoneSize - trashZoneMargin;
+  };
+
+  // 桌面端：处理拖拽开始
   const handleDragStart = (e: React.DragEvent) => {
     setIsDragging(true);
     setDragStartPos({ x: e.clientX, y: e.clientY });
@@ -61,22 +73,65 @@ export default function PaperStrip({ type, content, index, position, onDragStart
     }
   };
 
-  // 处理拖拽结束
+  // 桌面端：处理拖拽结束
   const handleDragEnd = (e: React.DragEvent) => {
     setIsDragging(false);
     
     if (onDragEnd) {
-      // 检测是否拖到垃圾桶区域（右下角）
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const trashZoneSize = viewportWidth < 1280 ? 80 : 160; // 移动端80px，桌面端160px
-      const trashZoneMargin = viewportWidth < 1280 ? 16 : 32; // 移动端16px，桌面端32px
-      
-      const isInTrashZone = 
-        e.clientX > viewportWidth - trashZoneSize - trashZoneMargin &&
-        e.clientY > viewportHeight - trashZoneSize - trashZoneMargin;
-      
+      const isInTrashZone = checkTrashZone(e.clientX, e.clientY);
       onDragEnd(index, e.clientX, e.clientY, isInTrashZone);
+    }
+  };
+
+  // 移动端：处理触摸开始
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    
+    setIsDragging(true);
+    setDragStartPos({ x: touch.clientX, y: touch.clientY });
+    setTouchOffset({
+      x: touch.clientX - rect.left - rect.width / 2,
+      y: touch.clientY - rect.top - rect.height / 2
+    });
+    
+    if (onDragStart) {
+      onDragStart(content, index);
+    }
+  };
+
+  // 移动端：处理触摸移动
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    // 阻止页面滚动
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // 计算新位置（百分比）
+    const newLeft = ((touch.clientX - touchOffset.x) / viewportWidth) * 100;
+    const newTop = ((touch.clientY - touchOffset.y) / viewportHeight) * 100;
+    
+    // 更新位置
+    const element = e.currentTarget as HTMLElement;
+    element.style.left = `${newLeft}%`;
+    element.style.top = `${newTop}%`;
+  };
+
+  // 移动端：处理触摸结束
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    
+    const touch = e.changedTouches[0];
+    
+    if (onDragEnd) {
+      const isInTrashZone = checkTrashZone(touch.clientX, touch.clientY);
+      onDragEnd(index, touch.clientX, touch.clientY, isInTrashZone);
     }
   };
 
@@ -86,7 +141,7 @@ export default function PaperStrip({ type, content, index, position, onDragStart
   return (
     <div
       className={cn(
-        'absolute cursor-grab active:cursor-grabbing transition-opacity',
+        'absolute cursor-grab active:cursor-grabbing transition-opacity touch-none',
         isDragging && 'opacity-50'
       )}
       style={{
@@ -98,6 +153,9 @@ export default function PaperStrip({ type, content, index, position, onDragStart
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* 艺术像素风格卡片 - 只有文字 */}
       <div className={cn(

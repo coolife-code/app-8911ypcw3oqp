@@ -1,5 +1,191 @@
 # 更新日志
 
+## [修复] 移动端触摸拖拽支持 - 2025-12-15
+
+### 问题描述
+移动端无法拖动卡片，因为原代码只使用了HTML5拖拽API（`draggable`），该API在移动端不支持。
+
+### 解决方案
+添加触摸事件（Touch Events）支持，实现移动端和桌面端的统一拖拽体验。
+
+### 核心改动
+
+#### 1. 双端拖拽支持
+- **桌面端**：使用HTML5拖拽API（`onDragStart`、`onDragEnd`）
+- **移动端**：使用触摸事件API（`onTouchStart`、`onTouchMove`、`onTouchEnd`）
+- **自动适配**：根据设备类型自动选择合适的事件处理
+
+#### 2. 移动端触摸事件
+**触摸开始（onTouchStart）**：
+- 记录触摸起始位置
+- 计算触摸偏移量（手指相对卡片中心的位置）
+- 设置拖拽状态
+- 触发拖拽开始回调
+
+**触摸移动（onTouchMove）**：
+- 阻止页面滚动（`e.preventDefault()`）
+- 实时计算卡片新位置（百分比）
+- 直接更新DOM元素位置
+- 流畅的拖拽体验
+
+**触摸结束（onTouchEnd）**：
+- 检测是否拖到垃圾桶区域
+- 触发拖拽结束回调
+- 重置拖拽状态
+
+#### 3. 优化细节
+- **拖拽时置顶**：`zIndex: isDragging ? 9999 : 10 + index`
+- **阻止滚动**：添加`touch-none`类和`e.preventDefault()`
+- **触摸偏移**：记录手指相对卡片中心的偏移，拖动更自然
+- **垃圾桶检测**：统一的垃圾桶区域检测函数
+
+### 技术实现
+
+**修改的文件**：
+1. `src/components/shred/PaperStrip.tsx`
+   - 添加触摸事件处理函数
+   - 添加触摸偏移状态
+   - 优化z-index逻辑
+   - 添加touch-none类
+
+**核心代码**：
+```typescript
+// 状态管理
+const [isDragging, setIsDragging] = useState(false);
+const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+const [touchOffset, setTouchOffset] = useState({ x: 0, y: 0 });
+
+// 拖拽时置顶
+const zIndex = isDragging ? 9999 : 10 + index;
+
+// 移动端：触摸开始
+const handleTouchStart = (e: React.TouchEvent) => {
+  const touch = e.touches[0];
+  const rect = e.currentTarget.getBoundingClientRect();
+  
+  setIsDragging(true);
+  setDragStartPos({ x: touch.clientX, y: touch.clientY });
+  setTouchOffset({
+    x: touch.clientX - rect.left - rect.width / 2,
+    y: touch.clientY - rect.top - rect.height / 2
+  });
+  
+  if (onDragStart) {
+    onDragStart(content, index);
+  }
+};
+
+// 移动端：触摸移动
+const handleTouchMove = (e: React.TouchEvent) => {
+  if (!isDragging) return;
+  
+  // 阻止页面滚动
+  e.preventDefault();
+  
+  const touch = e.touches[0];
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  // 计算新位置（百分比）
+  const newLeft = ((touch.clientX - touchOffset.x) / viewportWidth) * 100;
+  const newTop = ((touch.clientY - touchOffset.y) / viewportHeight) * 100;
+  
+  // 更新位置
+  const element = e.currentTarget as HTMLElement;
+  element.style.left = `${newLeft}%`;
+  element.style.top = `${newTop}%`;
+};
+
+// 移动端：触摸结束
+const handleTouchEnd = (e: React.TouchEvent) => {
+  if (!isDragging) return;
+  
+  setIsDragging(false);
+  
+  const touch = e.changedTouches[0];
+  
+  if (onDragEnd) {
+    const isInTrashZone = checkTrashZone(touch.clientX, touch.clientY);
+    onDragEnd(index, touch.clientX, touch.clientY, isInTrashZone);
+  }
+};
+
+// DOM元素
+<div
+  className={cn(
+    'absolute cursor-grab active:cursor-grabbing transition-opacity touch-none',
+    isDragging && 'opacity-50'
+  )}
+  draggable
+  onDragStart={handleDragStart}
+  onDragEnd={handleDragEnd}
+  onTouchStart={handleTouchStart}
+  onTouchMove={handleTouchMove}
+  onTouchEnd={handleTouchEnd}
+>
+```
+
+### 用户体验提升
+
+**修复前**：
+- ❌ 移动端无法拖动卡片
+- ❌ 只能在桌面端使用拖拽功能
+- ❌ 移动端体验不完整
+
+**修复后**：
+- ✅ 移动端可以流畅拖动卡片
+- ✅ 桌面端和移动端体验一致
+- ✅ 拖动时卡片置顶，不会被其他卡片遮挡
+- ✅ 阻止页面滚动，拖动更流畅
+- ✅ 可以拖到垃圾桶重新生成
+- ✅ 可以自由拖动改变卡片位置
+
+### 使用说明
+
+**移动端拖拽**：
+1. 用手指按住卡片
+2. 拖动到想要的位置
+3. 松开手指，卡片停留在新位置
+4. 拖到右下角垃圾桶可以重新生成
+
+**桌面端拖拽**：
+1. 用鼠标按住卡片
+2. 拖动到想要的位置
+3. 松开鼠标，卡片停留在新位置
+4. 拖到右下角垃圾桶可以重新生成
+
+### 技术细节
+
+**触摸偏移计算**：
+```typescript
+// 记录手指相对卡片中心的偏移
+setTouchOffset({
+  x: touch.clientX - rect.left - rect.width / 2,
+  y: touch.clientY - rect.top - rect.height / 2
+});
+
+// 拖动时减去偏移，让卡片中心跟随手指
+const newLeft = ((touch.clientX - touchOffset.x) / viewportWidth) * 100;
+const newTop = ((touch.clientY - touchOffset.y) / viewportHeight) * 100;
+```
+
+**阻止页面滚动**：
+```typescript
+// 添加touch-none类
+className="touch-none"
+
+// 在touchMove中阻止默认行为
+e.preventDefault();
+```
+
+**拖拽时置顶**：
+```typescript
+// 拖拽时z-index设为9999，确保在最上层
+const zIndex = isDragging ? 9999 : 10 + index;
+```
+
+---
+
 ## [功能调整] 微小说改为笑话 - 2025-12-15
 
 ### 功能描述
