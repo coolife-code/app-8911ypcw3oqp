@@ -101,9 +101,9 @@ export default function CardStack({ responses, onClear, onReshred }: CardStackPr
       {/* 垃圾桶 Drop Zone - 右下角 */}
       <div
         className={cn(
-          'fixed bottom-8 right-8 w-32 h-32 xl:w-40 xl:h-40',
+          'fixed bottom-4 right-4 w-20 h-20 xl:bottom-8 xl:right-8 xl:w-40 xl:h-40',
           'pixel-border border-foreground rounded-lg',
-          'flex flex-col items-center justify-center gap-2',
+          'flex flex-col items-center justify-center gap-1 xl:gap-2',
           'transition-all duration-300',
           isDragOver 
             ? 'bg-primary/30 border-primary scale-110 shadow-2xl' 
@@ -114,32 +114,32 @@ export default function CardStack({ responses, onClear, onReshred }: CardStackPr
         onDrop={handleDrop}
       >
         <div className={cn(
-          'text-5xl xl:text-6xl transition-transform',
+          'text-3xl xl:text-6xl transition-transform',
           isDragOver && 'animate-bounce'
         )}>
           🗑️
         </div>
-        <p className="text-[10px] xl:text-xs pixel-text text-center px-2">
+        <p className="text-[8px] xl:text-xs pixel-text text-center px-1 xl:px-2">
           {isDragOver ? '松手碎纸！' : '拖到这里'}
         </p>
       </div>
 
       {/* 返回按钮 - 左下角 */}
-      <div className="fixed bottom-8 left-8">
+      <div className="fixed bottom-4 left-4 xl:bottom-8 xl:left-8">
         <button
           onClick={onClear}
-          className="pixel-border border-foreground bg-card px-6 py-3 rounded-lg font-bold hover:bg-accent transition-colors text-xs"
+          className="pixel-border border-foreground bg-card px-3 py-2 xl:px-6 xl:py-3 rounded-lg font-bold hover:bg-accent transition-colors text-[10px] xl:text-xs"
         >
           输入新内容 ✨
         </button>
       </div>
 
       {/* 提示信息 - 顶部 */}
-      <div className="fixed top-8 left-1/2 -translate-x-1/2 text-center">
-        <p className="text-xs pixel-text mb-2">
+      <div className="fixed top-4 xl:top-8 left-1/2 -translate-x-1/2 text-center px-4">
+        <p className="text-[10px] xl:text-xs pixel-text mb-1 xl:mb-2">
           已生成 {responses.length} 次
         </p>
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[8px] xl:text-[10px] text-muted-foreground">
           点击卡片翻面 · 拖动卡片到垃圾桶重新碎纸
         </p>
       </div>

@@ -81,19 +81,20 @@ export default function PaperStrip({ type, content, index, position, onDragStart
       onDragEnd={handleDragEnd}
       onClick={() => !isDragging && setIsFlipped(!isFlipped)}
     >
-      <div className={cn('flip-card-inner w-64 h-96', isFlipped && 'flipped')}>
+      {/* 响应式尺寸：移动端小，桌面端大 */}
+      <div className={cn('flip-card-inner w-40 h-56 xl:w-64 xl:h-96', isFlipped && 'flipped')}>
         {/* 正面 - 标题 */}
         <div className="flip-card-front absolute w-full h-full">
           <div className={cn(
-            'w-full h-full pixel-border border-foreground rounded-lg p-6',
-            'flex flex-col items-center justify-center gap-4',
+            'w-full h-full pixel-border border-foreground rounded-lg p-3 xl:p-6',
+            'flex flex-col items-center justify-center gap-2 xl:gap-4',
             'bg-card shadow-xl'
           )}>
-            <div className="text-6xl">{config.emoji}</div>
-            <h3 className="text-sm font-bold pixel-text text-center">
+            <div className="text-4xl xl:text-6xl">{config.emoji}</div>
+            <h3 className="text-[10px] xl:text-sm font-bold pixel-text text-center">
               {config.title}
             </h3>
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-[8px] xl:text-xs text-muted-foreground text-center">
               点击翻面 / 拖到垃圾桶
             </p>
           </div>
@@ -102,12 +103,12 @@ export default function PaperStrip({ type, content, index, position, onDragStart
         {/* 背面 - 内容 */}
         <div className="flip-card-back absolute w-full h-full">
           <div className={cn(
-            'w-full h-full pixel-border border-foreground rounded-lg p-6',
+            'w-full h-full pixel-border border-foreground rounded-lg p-3 xl:p-6',
             'flex flex-col items-center justify-center',
             config.bgColor,
             'shadow-xl'
           )}>
-            <p className="text-xs leading-relaxed text-center text-background font-bold break-words px-2">
+            <p className="text-[9px] xl:text-xs leading-relaxed text-center text-background font-bold break-words px-1 xl:px-2">
               {content || '生成中...'}
             </p>
           </div>
