@@ -78,6 +78,16 @@ export default function HomePage() {
     setShowStack(false);
   };
 
+  // 新增：使用已有文本重新碎纸
+  const handleReshred = async (text: string) => {
+    setShowStack(false); // 先关闭卡片堆叠
+    
+    // 短暂延迟后开始碎纸，让动画更流畅
+    setTimeout(() => {
+      handleShred(text);
+    }, 300);
+  };
+
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* 背景装饰 */}
@@ -118,6 +128,7 @@ export default function HomePage() {
         <CardStack 
           responses={responses} 
           onClear={handleClearStack}
+          onReshred={handleReshred}
         />
       )}
 

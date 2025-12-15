@@ -1,5 +1,92 @@
 # 更新日志
 
+## [新功能] 选择生成的卡片重新碎纸 - 2025-12-15
+
+### 功能描述
+用户现在可以选择已经生成的卡片，使用其原始文本重新进行碎纸，无需手动重新输入。
+
+### 新增功能
+
+#### 1. 保存原始文本
+在`ShredResponse`接口中添加`originalText`字段，保存用户的原始输入。
+
+```typescript
+export interface ShredResponse {
+  darkCheer: string;
+  toxicSoup: string;
+  microStory: string;
+  deepQuote: string;
+  originalText: string; // 新增：保存原始输入文本
+}
+```
+
+#### 2. 卡片堆叠界面改进
+在卡片堆叠界面添加了两个按钮：
+- **用这张再碎 🔄**：使用当前卡片的原始文本重新生成四种回应
+- **输入新内容 ✨**：关闭卡片堆叠，返回输入界面
+
+#### 3. 原始文本显示
+在卡片堆叠界面顶部显示当前卡片的原始碎念内容，方便用户查看。
+
+### 使用方法
+
+1. 输入心情或吐槽，点击"碎一下"
+2. 查看生成的四张纸条
+3. 如果想用相同的文本重新生成：
+   - 点击"用这张再碎 🔄"按钮
+   - 系统会使用相同的文本重新调用AI
+   - 生成新的四种回应
+4. 如果想输入新内容：
+   - 点击"输入新内容 ✨"按钮
+   - 返回输入界面
+
+### 技术实现
+
+**修改的文件**：
+- `src/services/ai.ts`：添加`originalText`字段到返回数据
+- `src/components/shred/CardStack.tsx`：添加重新碎纸按钮和原始文本显示
+- `src/pages/HomePage.tsx`：添加`handleReshred`处理函数
+
+**核心代码**：
+```typescript
+// 在 generateShredResponses 中保存原始文本
+resolve({
+  darkCheer: parsed.darkCheer,
+  toxicSoup: parsed.toxicSoup,
+  microStory: parsed.microStory,
+  deepQuote: parsed.deepQuote,
+  originalText: userInput // 保存原始输入
+});
+
+// 在 HomePage 中处理重新碎纸
+const handleReshred = async (text: string) => {
+  setShowStack(false);
+  setTimeout(() => {
+    handleShred(text);
+  }, 300);
+};
+```
+
+### 用户体验改进
+
+**改进前**：
+- 用户想重新生成相同内容的回应时，需要手动重新输入
+- 无法查看原始输入的内容
+
+**改进后**：
+- ✅ 一键重新生成，无需重新输入
+- ✅ 显示原始碎念内容
+- ✅ 流畅的动画过渡
+- ✅ 清晰的按钮区分（重新碎 vs 新内容）
+
+### 应用场景
+
+1. **对结果不满意**：想用相同的文本重新生成不同的回应
+2. **比较效果**：多次生成，选择最喜欢的回应
+3. **查看原文**：忘记自己输入了什么，可以在界面上查看
+
+---
+
 ## [修复] AI返回格式错误问题 - 2025-12-15
 
 ### 问题描述

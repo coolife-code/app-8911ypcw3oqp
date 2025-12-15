@@ -166,6 +166,7 @@ export interface ShredResponse {
   toxicSoup: string;
   microStory: string;
   deepQuote: string;
+  originalText: string; // 保存原始输入文本，用于重新碎纸
 }
 
 // 提取JSON内容的辅助函数
@@ -255,7 +256,8 @@ JSON格式要求：
             darkCheer: parsed.darkCheer,
             toxicSoup: parsed.toxicSoup,
             microStory: parsed.microStory,
-            deepQuote: parsed.deepQuote
+            deepQuote: parsed.deepQuote,
+            originalText: userInput // 保存原始输入
           });
         } catch (error) {
           console.error('解析错误，原始响应:', fullResponse);
